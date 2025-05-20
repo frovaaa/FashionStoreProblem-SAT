@@ -1,0 +1,6 @@
+coat blue
+top  blue
+bottom red
+hat   green
+gloves black
+shoes red

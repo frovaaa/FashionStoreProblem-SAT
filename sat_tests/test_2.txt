@@ -1,0 +1,6 @@
+coat  white
+top   white
+bottom white
+hat   black
+gloves black
+shoes  black

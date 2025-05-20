@@ -1,0 +1,13 @@
+coat   red
+coat   blue
+coat   green
+top    white
+top    black
+bottom black
+bottom blue
+hat    red
+hat    green
+gloves black
+gloves white
+shoes  black
+shoes  white
