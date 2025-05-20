@@ -82,14 +82,54 @@
         {% endif %} {% if selected and status == "SATISFIABLE" %}
         <div class="mt-2">
           <strong>Selected Garments:</strong>
-          <ul class="list-group mb-2">
-            {% for item in selected %}
-            <li class="list-group-item">{{ item }}</li>
-            {% endfor %}
-          </ul>
+          <table
+            class="table table-bordered table-sm align-middle mt-2"
+            style="max-width: 400px"
+          >
+            <thead class="table-light">
+              <tr>
+                <th>Type</th>
+                <th>Color</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in selected %} {% set parts = item.split('_', 1) %}
+              <tr>
+                <td>{{ parts[0]|capitalize }}</td>
+                <td>
+                  {% if parts|length > 1 %}
+                  <span
+                    class="badge rounded-pill"
+                    style="background-color: '{{ parts[1] }}'; color: #222; min-width: 60px;"
+                  >
+                    {{ parts[1]|capitalize }}
+                  </span>
+                  {% else %}
+                  <span
+                    class="badge rounded-pill bg-secondary"
+                    style="min-width: 60px"
+                  ></span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
         {% endif %}
-        <div class="result">{{ result }}</div>
+        <button
+          class="btn btn-link p-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#rawOutput"
+          aria-expanded="false"
+          aria-controls="rawOutput"
+        >
+          Show raw SAT output
+        </button>
+        <div class="collapse" id="rawOutput">
+          <div class="result mt-2">{{ result }}</div>
+        </div>
       </div>
       {% endif %}
     </div>
