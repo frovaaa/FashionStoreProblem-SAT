@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-SATsolver="/home/edoardo/Desktop/z3-4.12.4-x64-glibc-2.31/bin/z3"
+SATsolver = "z3"
 
 import sys
 from subprocess import Popen, PIPE
@@ -21,30 +21,38 @@ one_per_body_part = ["hat", "coat", "top", "bottom", "shoes", "gloves"]
 gVarNumberToName = ["invalid"]
 gVarNameToNumber = {}
 
+
 # Helper functions
 def varCount():
     return len(gVarNumberToName) - 1
 
+
 def varNameToNumber(name):
     return gVarNameToNumber[name]
+
 
 def addVarName(name):
     gVarNumberToName.append(name)
     gVarNameToNumber[name] = varCount()
 
+
 def getVarName(garment, color):
     return f"{garment}_{color}"
+
 
 def genVarNames():
     for garment in garments:
         for color in garments[garment]:
             addVarName(getVarName(garment, color))
 
+
 def genClauses():
     clauses = []
 
     # A: Outfit size constraints (MIN_G to MAX_G)
-    all_vars = [varNameToNumber(getVarName(g, c)) for g in garments for c in garments[g]]
+    all_vars = [
+        varNameToNumber(getVarName(g, c)) for g in garments for c in garments[g]
+    ]
 
     clauses.append(all_vars)  # At least one garment
     for comb in combinations(all_vars, MAX_G + 1):  # At most MAX_G garments
@@ -56,12 +64,21 @@ def genClauses():
 
     # B: Type Coverage (at least one garment per type)
     for garment_type in garments:
-        clauses.append([varNameToNumber(getVarName(garment_type, c)) for c in garments[garment_type]])
+        clauses.append(
+            [
+                varNameToNumber(getVarName(garment_type, c))
+                for c in garments[garment_type]
+            ]
+        )
 
     # C: Palette size constraints
     color_vars = {}
     for color in colors:
-        color_vars[color] = [varNameToNumber(getVarName(g, color)) for g in garments if color in garments[g]]
+        color_vars[color] = [
+            varNameToNumber(getVarName(g, color))
+            for g in garments
+            if color in garments[g]
+        ]
 
     # At least MIN_C colors
     clauses.append([var for color_group in color_vars.values() for var in color_group])
@@ -77,13 +94,24 @@ def genClauses():
             if c1 in garments[g1]:
                 for g2 in garments:
                     if c2 in garments[g2]:
-                        clauses.append([-varNameToNumber(getVarName(g1, c1)), -varNameToNumber(getVarName(g2, c2))])
+                        clauses.append(
+                            [
+                                -varNameToNumber(getVarName(g1, c1)),
+                                -varNameToNumber(getVarName(g2, c2)),
+                            ]
+                        )
 
     # F: Layering Order
     for upper, lower in layering:
         if upper in garments and lower in garments:
             for upper_color in garments[upper]:
-                clauses.append([-varNameToNumber(getVarName(upper, upper_color))] + [varNameToNumber(getVarName(lower, lower_color)) for lower_color in garments[lower]])
+                clauses.append(
+                    [-varNameToNumber(getVarName(upper, upper_color))]
+                    + [
+                        varNameToNumber(getVarName(lower, lower_color))
+                        for lower_color in garments[lower]
+                    ]
+                )
 
     # G: One-Per-Body-Part
     for part in one_per_body_part:
@@ -94,7 +122,8 @@ def genClauses():
 
     return clauses
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: script.py <input_file>")
         sys.exit(1)
@@ -115,5 +144,5 @@ if __name__ == '__main__':
         f.write(header + cnf)
 
     solverOutput = Popen([SATsolver, "tmp_prob.cnf"], stdout=PIPE).communicate()[0]
-    res = solverOutput.decode('utf-8')
+    res = solverOutput.decode("utf-8")
     print(res)
