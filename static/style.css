@@ -8,15 +8,25 @@ body {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   padding: 32px 36px 24px 36px;
+  position: relative;
 }
-.result {
-  background: #f1f5fb;
-  border-radius: 8px;
-  padding: 18px;
-  font-family: 'Fira Mono', 'Consolas', monospace;
-  color: #1e293b;
-  white-space: pre-wrap;
-  word-break: break-word;
+.main-content-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  position: relative;
+}
+.main-content {
+  flex: 1 1 0%;
+  min-width: 0;
+  z-index: 1;
+}
+.quick-test-panel {
+  margin-left: 36px;
+  width: 300px;
+  min-width: 220px;
+  position: static;
+  z-index: 2;
 }
 .footer {
   text-align: center;
@@ -34,4 +44,41 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* Color badge classes for result table */
+.color-red {
+  background-color: red !important;
+  color: #222 !important;
+}
+.color-blue {
+  background-color: blue !important;
+  color: #fff !important;
+}
+.color-green {
+  background-color: green !important;
+  color: #fff !important;
+}
+.color-white {
+  background-color: #fff !important;
+  color: #222 !important;
+  border: 1px solid #ccc;
+}
+.color-black {
+  background-color: #222 !important;
+  color: #fff !important;
+}
+.color-pink {
+  background-color: pink !important;
+  color: #222 !important;
+}
+@media (max-width: 991px) {
+  .main-content-wrapper {
+    flex-direction: column;
+  }
+  .quick-test-panel {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 24px;
+  }
 }

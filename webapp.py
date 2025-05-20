@@ -45,17 +45,44 @@ def index():
             "index.html", result=result, status=status, selected=selected
         )
     if request.method == "POST":
-        file = request.files.get("inputfile")
-        if file:
-            filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(filepath)
+        # Check for garment/color direct input
+        garment_types = request.form.getlist("garment_type[]")
+        garment_colors = request.form.getlist("garment_color[]")
+        # Only use if at least one non-empty pair is present
+        garment_pairs = [
+            (g.strip(), c.strip())
+            for g, c in zip(garment_types, garment_colors)
+            if g.strip() and c.strip()
+        ]
+        if garment_pairs:
+            # Write to a temp file in the same format as the uploaded file
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(
+                delete=False, mode="w", suffix=".txt", dir=UPLOAD_FOLDER
+            ) as tmp:
+                for g, c in garment_pairs:
+                    tmp.write(f"{g} {c}\n")
+                tmp_path = tmp.name
             proc = subprocess.run(
-                ["python3", "fashion.py", filepath],
+                ["python3", "fashion.py", tmp_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
             result = proc.stdout.decode("utf-8")
             status, selected = parse_sat_output(result)
+        else:
+            file = request.files.get("inputfile")
+            if file:
+                filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+                file.save(filepath)
+                proc = subprocess.run(
+                    ["python3", "fashion.py", filepath],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                result = proc.stdout.decode("utf-8")
+                status, selected = parse_sat_output(result)
     return render_template(
         "index.html", result=result, status=status, selected=selected
     )
