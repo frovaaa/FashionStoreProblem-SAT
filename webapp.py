@@ -7,9 +7,29 @@ UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
+def parse_sat_output(output):
+    lines = output.splitlines()
+    if any("UNSAT" in line for line in lines):
+        return "UNSATISFIABLE", []
+    selected = []
+    for line in lines:
+        if line.startswith("v ") or line.startswith("s SATISFIABLE"):
+            continue
+        if line.strip().startswith("c "):
+            # Try to extract selected garment from comment lines
+            parts = line.strip().split()
+            if len(parts) > 1 and parts[1].startswith("G_"):
+                selected.append(parts[1][2:])  # Remove 'G_' prefix
+    if selected:
+        return "SATISFIABLE", selected
+    return "SATISFIABLE", []
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
+    status = None
+    selected = []
     # Support quick test links
     testfile = request.args.get("test")
     if testfile and os.path.exists(testfile):
@@ -20,7 +40,10 @@ def index():
             stderr=subprocess.PIPE,
         )
         result = proc.stdout.decode("utf-8")
-        return render_template("index.html", result=result)
+        status, selected = parse_sat_output(result)
+        return render_template(
+            "index.html", result=result, status=status, selected=selected
+        )
     if request.method == "POST":
         file = request.files.get("inputfile")
         if file:
@@ -32,9 +55,12 @@ def index():
                 stderr=subprocess.PIPE,
             )
             result = proc.stdout.decode("utf-8")
-    return render_template("index.html", result=result)
+            status, selected = parse_sat_output(result)
+    return render_template(
+        "index.html", result=result, status=status, selected=selected
+    )
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(debug=False, host="0.0.0.0", port=port)
+    app.run(debug=True, host="0.0.0.0", port=port)
