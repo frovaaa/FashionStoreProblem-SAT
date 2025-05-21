@@ -42,6 +42,13 @@ def genVarNames():
 
 def genClauses():
     WINTER = True
+    # Preferences (for simulating soft constraints)
+    # Prefer (preferred_item) over (dispreferred_item)
+    preferences = [
+        (("gloves", "black"), ("gloves", "white")),
+        (("coat", "blue"), ("coat", "red")),
+        (("top", "black"), ("top", "green"))
+    ]
     clauses = []
 
     # A: Outfit size constraints (MIN_G to MAX_G)
@@ -137,7 +144,21 @@ def genClauses():
             clauses.append(outerwear_vars)
         else:
             print("[WINTER] No outerwear (coat/gloves) available → outfit is UNSAT by default.")
-            clauses.append([])  # Adds empty clause = UNSAT                
+            clauses.append([])  # Adds empty clause = UNSAT 
+
+    # I: Cost / Style Preference Simulation (soft constraints via implication)
+    for (preferred, less_preferred) in preferences:
+        g1, c1 = preferred
+        g2, c2 = less_preferred
+        if g1 in garments and c1 in garments[g1] and g2 in garments and c2 in garments[g2]:
+            v1 = varNameToNumber(getVarName(g1, c1))  # preferred
+            v2 = varNameToNumber(getVarName(g2, c2))  # less preferred
+
+            # Prefer v1 over v2: if v2 is selected, v1 should be too
+            # This clause: ¬v2 ∨ v1
+            clauses.append([-v2, v1])
+            print(f"[Preference] Prefer {g1}_{c1} over {g2}_{c2} → Clause: [-{v2}, {v1}]")
+                           
 
     return clauses
 

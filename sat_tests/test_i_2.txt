@@ -1,0 +1,7 @@
+hat white
+top black
+top green
+coat blue
+coat red
+gloves black
+bottom white
