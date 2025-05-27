@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import subprocess
 import os
 
@@ -23,6 +23,72 @@ def parse_sat_output(output):
     if selected:
         return "SATISFIABLE", selected
     return "SATISFIABLE", []
+
+
+@app.route("/get_constraints")
+def get_constraints():
+    """Generate and return constraint information for display."""
+    try:
+        # Define the constraints information
+        constraints = [
+            {
+                "category": "A. Outfit Size Constraints",
+                "description": "Must wear between 3-6 garments total",
+                "details": ["Minimum 3 garments", "Maximum 6 garments"]
+            },
+            {
+                "category": "B. Type Coverage", 
+                "description": "Must have at least one garment from each available type",
+                "details": ["At least one hat, coat, top, bottom, shoes, or gloves (if available)"]
+            },
+            {
+                "category": "C. Palette Size Constraints",
+                "description": "Must use between 2-4 different colors",
+                "details": ["Minimum 2 colors", "Maximum 4 colors"]
+            },
+            {
+                "category": "D. Color Clashes",
+                "description": "Certain color combinations are forbidden",
+                "details": ["Red and Pink cannot be worn together"]
+            },
+            {
+                "category": "E. Complement Harmony",
+                "description": "If wearing warm colors, must also wear at least one cool color",
+                "details": [
+                    "Warm colors: red, orange, yellow", 
+                    "Cool colors: blue, green, cyan",
+                    "If any warm color is chosen, at least one cool color must be included"
+                ]
+            },
+            {
+                "category": "F. Layering Order",
+                "description": "Certain garments require others to be worn underneath",
+                "details": ["If wearing a coat, must also wear a top underneath"]
+            },
+            {
+                "category": "G. One-Per-Body-Part",
+                "description": "Can only wear one garment per body part",
+                "details": ["Only one hat, one coat, one top, one bottom, one pair of shoes, one pair of gloves"]
+            },
+            {
+                "category": "H. Season/Context (Winter)",
+                "description": "Winter season requires appropriate outerwear",
+                "details": ["Must wear either a coat or gloves (or both)"]
+            },
+            {
+                "category": "I. Style Preferences",
+                "description": "Soft constraints that prefer certain combinations",
+                "details": [
+                    "Prefer black gloves over white gloves",
+                    "Prefer blue coat over red coat", 
+                    "Prefer black top over green top"
+                ]
+            }
+        ]
+        
+        return jsonify(constraints)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/load_test_file")
