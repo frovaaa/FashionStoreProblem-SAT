@@ -47,6 +47,14 @@ def genVarNames():
 
 
 def genClauses():
+    WINTER = True
+    # Preferences (for simulating soft constraints)
+    # Prefer (preferred_item) over (dispreferred_item)
+    preferences = [
+        (("gloves", "black"), ("gloves", "white")),
+        (("coat", "blue"), ("coat", "red")),
+        (("top", "black"), ("top", "green")),
+    ]
     clauses = []
 
     # A: Outfit size constraints (MIN_G to MAX_G)
@@ -101,6 +109,100 @@ def genClauses():
                             ]
                         )
 
+    # E: Complement Harmony – if warm colors are worn, at least one cool color must also appear
+    warm_colors = {"red", "orange", "yellow"}
+    cool_colors = {"blue", "green", "cyan"}
+
+    print("\n=== Checking Complement Harmony Constraint ===")
+    for warm in warm_colors:
+        warm_vars = [
+            varNameToNumber(getVarName(g, warm))
+            for g in garments
+            if warm in garments[g]
+        ]
+
+        if not warm_vars:
+            print(f"[SKIP] No garments found in warm color '{warm}'")
+            continue
+        else:
+            print(
+                f"[WARM] {warm} → variables: {[gVarNumberToName[v] for v in warm_vars]}"
+            )
+
+        cool_vars = []
+        for cool in cool_colors:
+            for g in garments:
+                if cool in garments[g]:
+                    cool_vars.append(varNameToNumber(getVarName(g, cool)))
+
+        if cool_vars:
+            print(
+                f"[COOL OPTIONS] Found cool garments: {[gVarNumberToName[v] for v in cool_vars]}"
+            )
+        else:
+            print(
+                "[BLOCKING] No cool colors available → all warm items will be blocked."
+            )
+
+        for wv in warm_vars:
+            clause = [-wv] + cool_vars
+            print(
+                "Adding clause:",
+                clause,
+                "==>",
+                "¬" + gVarNumberToName[wv],
+                "or",
+                [gVarNumberToName[v] for v in cool_vars],
+            )
+            clauses.append(clause)
+
+    # E: Complement Harmony – if warm colors are worn, at least one cool color must also appear
+    warm_colors = {"red", "orange", "yellow"}
+    cool_colors = {"blue", "green", "cyan"}
+
+    print("\n=== Checking Complement Harmony Constraint ===")
+    for warm in warm_colors:
+        warm_vars = [
+            varNameToNumber(getVarName(g, warm))
+            for g in garments
+            if warm in garments[g]
+        ]
+
+        if not warm_vars:
+            print(f"[SKIP] No garments found in warm color '{warm}'")
+            continue
+        else:
+            print(
+                f"[WARM] {warm} → variables: {[gVarNumberToName[v] for v in warm_vars]}"
+            )
+
+        cool_vars = []
+        for cool in cool_colors:
+            for g in garments:
+                if cool in garments[g]:
+                    cool_vars.append(varNameToNumber(getVarName(g, cool)))
+
+        if cool_vars:
+            print(
+                f"[COOL OPTIONS] Found cool garments: {[gVarNumberToName[v] for v in cool_vars]}"
+            )
+        else:
+            print(
+                "[BLOCKING] No cool colors available → all warm items will be blocked."
+            )
+
+        for wv in warm_vars:
+            clause = [-wv] + cool_vars
+            print(
+                "Adding clause:",
+                clause,
+                "==>",
+                "¬" + gVarNumberToName[wv],
+                "or",
+                [gVarNumberToName[v] for v in cool_vars],
+            )
+            clauses.append(clause)
+
     # F: Layering Order
     for upper, lower in layering:
         if upper in garments and lower in garments:
@@ -119,6 +221,46 @@ def genClauses():
             part_vars = [varNameToNumber(getVarName(part, c)) for c in garments[part]]
             for comb in combinations(part_vars, 2):
                 clauses.append([-x for x in comb])
+    # H: Season / Context → if WINTER, require coat or gloves
+    if WINTER:
+        outerwear_vars = []
+        for part in ["coat", "gloves"]:
+            if part in garments:
+                outerwear_vars += [
+                    varNameToNumber(getVarName(part, c)) for c in garments[part]
+                ]
+
+        if outerwear_vars:
+            print(
+                "[WINTER] Adding requirement: at least one of coat or gloves must be worn."
+            )
+            print("Clause:", outerwear_vars)
+            clauses.append(outerwear_vars)
+        else:
+            print(
+                "[WINTER] No outerwear (coat/gloves) available → outfit is UNSAT by default."
+            )
+            clauses.append([])  # Adds empty clause = UNSAT
+
+    # I: Cost / Style Preference Simulation (soft constraints via implication)
+    for preferred, less_preferred in preferences:
+        g1, c1 = preferred
+        g2, c2 = less_preferred
+        if (
+            g1 in garments
+            and c1 in garments[g1]
+            and g2 in garments
+            and c2 in garments[g2]
+        ):
+            v1 = varNameToNumber(getVarName(g1, c1))  # preferred
+            v2 = varNameToNumber(getVarName(g2, c2))  # less preferred
+
+            # Prefer v1 over v2: if v2 is selected, v1 should be too
+            # This clause: ¬v2 ∨ v1
+            clauses.append([-v2, v1])
+            print(
+                f"[Preference] Prefer {g1}_{c1} over {g2}_{c2} → Clause: [-{v2}, {v1}]"
+            )
 
     return clauses
 
@@ -146,3 +288,16 @@ if __name__ == "__main__":
     solverOutput = Popen([SATsolver, "tmp_prob.cnf"], stdout=PIPE).communicate()[0]
     res = solverOutput.decode("utf-8")
     print(res)
+
+    # Parse result and print selected garments
+if res.startswith("s SATISFIABLE"):
+    lines = res.strip().split("\n")
+    model_line = next((line for line in lines if line.startswith("v ")), None)
+    if model_line:
+        selected_vars = list(map(int, model_line.split()[1:]))  # skip "v"
+        selected_vars = [v for v in selected_vars if v > 0]  # only true variables
+
+        print("\nSelected garments:")
+        for var in selected_vars:
+            if var < len(gVarNumberToName):
+                print(" -", gVarNumberToName[var])

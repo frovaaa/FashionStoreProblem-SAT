@@ -1,0 +1,4 @@
+hat green
+top red
+bottom black
+shoes white

@@ -1,0 +1,3 @@
+hat red
+top black
+coat blue
