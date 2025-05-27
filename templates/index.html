@@ -28,13 +28,41 @@
                 id="inputfile"
                 accept=".txt"
               />
-            </div>
-            <div class="example-inputs mb-2">
+            </div>            <div class="example-inputs mb-2">
               <strong>Example input format:</strong><br />
               <code>hat red<br />coat green<br />shoes white</code>
             </div>
+            
+            <!-- Input Mode Toggle -->
             <div class="mb-3">
-              <label class="form-label">Or select garments and colors:</label>
+              <div class="btn-group" role="group" aria-label="Input mode">
+                <input type="radio" class="btn-check" name="input_mode" id="dropdown_mode" value="dropdown" checked>
+                <label class="btn btn-outline-primary" for="dropdown_mode">Dropdown Selection</label>
+                
+                <input type="radio" class="btn-check" name="input_mode" id="text_mode" value="text">
+                <label class="btn btn-outline-primary" for="text_mode">Text Input</label>
+              </div>
+            </div>
+
+            <!-- Text Input Section -->
+            <div class="mb-3" id="text-input-section" style="display: none;">
+              <label for="text_restrictions" class="form-label">Enter restrictions (one per line):</label>
+              <textarea 
+                class="form-control" 
+                id="text_restrictions" 
+                name="text_restrictions" 
+                rows="5" 
+                placeholder="hat red&#10;coat green&#10;shoes white"
+              ></textarea>
+              <div class="mt-2">
+                <button type="button" class="btn btn-secondary btn-sm" id="parse-text-btn">Use Text Input</button>
+                <small class="text-muted ms-2">This will convert your text to dropdown selections below</small>
+              </div>
+            </div>
+
+            <!-- Dropdown Selection Section -->
+            <div class="mb-3" id="dropdown-section">
+              <label class="form-label">Select garments and colors:</label>
               <div id="garment-list">
                 {% set garment_types = request.form.getlist('garment_type[]') %}
                 {% set garment_colors = request.form.getlist('garment_color[]') %}
@@ -220,22 +248,141 @@
       &copy; {{ 2025 }} Fashion Store SAT Solver &mdash;
       <a href="https://github.com/" target="_blank">GitHub</a>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>    <script>
       document.addEventListener('DOMContentLoaded', function () {
         const addRowBtn = document.getElementById('add-row');
         const garmentList = document.getElementById('garment-list');
-        addRowBtn.addEventListener('click', function () {
-          const row = garmentList.firstElementChild.cloneNode(true);
-          row.querySelectorAll('select').forEach((sel) => (sel.value = ''));
-          row.querySelector('.remove-row').style.display = '';
-          garmentList.appendChild(row);
+        const dropdownMode = document.getElementById('dropdown_mode');
+        const textMode = document.getElementById('text_mode');
+        const textInputSection = document.getElementById('text-input-section');
+        const dropdownSection = document.getElementById('dropdown-section');
+        const textRestrictions = document.getElementById('text_restrictions');
+        const parseTextBtn = document.getElementById('parse-text-btn');
+
+        // Handle input mode toggle
+        function toggleInputMode() {
+          if (textMode.checked) {
+            textInputSection.style.display = 'block';
+            dropdownSection.style.display = 'none';
+          } else {
+            textInputSection.style.display = 'none';
+            dropdownSection.style.display = 'block';
+          }
+        }
+
+        dropdownMode.addEventListener('change', toggleInputMode);
+        textMode.addEventListener('change', toggleInputMode);
+
+        // Parse text input and create dropdown selections
+        parseTextBtn.addEventListener('click', function() {
+          const text = textRestrictions.value.trim();
+          if (!text) {
+            alert('Please enter some restrictions first.');
+            return;
+          }
+
+          const lines = text.split('\n').filter(line => line.trim());
+          const validGarments = ['hat', 'coat', 'top', 'bottom', 'shoes', 'gloves'];
+          const validColors = ['red', 'blue', 'green', 'white', 'black', 'pink'];
+          
+          // Clear existing dropdown rows
+          garmentList.innerHTML = '';
+
+          let hasValidInput = false;
+
+          lines.forEach(line => {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 2) {
+              const garment = parts[0].toLowerCase();
+              const color = parts[1].toLowerCase();
+              
+              if (validGarments.includes(garment) && validColors.includes(color)) {
+                const row = createGarmentRow(garment, color);
+                garmentList.appendChild(row);
+                hasValidInput = true;
+              }
+            }
+          });
+
+          if (!hasValidInput) {
+            alert('No valid garment-color pairs found. Please check your input format.\nExample: "hat red" or "coat green"');
+            // Add a default empty row
+            const row = createGarmentRow('', '');
+            garmentList.appendChild(row);
+          } else {
+            // Switch to dropdown mode to show the results
+            dropdownMode.checked = true;
+            toggleInputMode();
+            alert('Text input has been converted to dropdown selections!');
+          }
         });
+
+        // Function to create a garment row with optional pre-selected values
+        function createGarmentRow(selectedGarment = '', selectedColor = '') {
+          const row = document.createElement('div');
+          row.className = 'row g-2 mb-1 garment-row';
+          
+          row.innerHTML = `
+            <div class="col-5">
+              <select name="garment_type[]" class="form-select">
+                <option value="">Type...</option>
+                <option value="hat" ${selectedGarment === 'hat' ? 'selected' : ''}>Hat</option>
+                <option value="coat" ${selectedGarment === 'coat' ? 'selected' : ''}>Coat</option>
+                <option value="top" ${selectedGarment === 'top' ? 'selected' : ''}>Top</option>
+                <option value="bottom" ${selectedGarment === 'bottom' ? 'selected' : ''}>Bottom</option>
+                <option value="shoes" ${selectedGarment === 'shoes' ? 'selected' : ''}>Shoes</option>
+                <option value="gloves" ${selectedGarment === 'gloves' ? 'selected' : ''}>Gloves</option>
+              </select>
+            </div>
+            <div class="col-5">
+              <select name="garment_color[]" class="form-select">
+                <option value="">Color...</option>
+                <option value="red" ${selectedColor === 'red' ? 'selected' : ''}>Red</option>
+                <option value="blue" ${selectedColor === 'blue' ? 'selected' : ''}>Blue</option>
+                <option value="green" ${selectedColor === 'green' ? 'selected' : ''}>Green</option>
+                <option value="white" ${selectedColor === 'white' ? 'selected' : ''}>White</option>
+                <option value="black" ${selectedColor === 'black' ? 'selected' : ''}>Black</option>
+                <option value="pink" ${selectedColor === 'pink' ? 'selected' : ''}>Pink</option>
+              </select>
+            </div>
+            <div class="col-2 d-flex align-items-center">
+              <button type="button" class="btn btn-danger btn-sm remove-row">&times;</button>
+            </div>
+          `;
+          
+          return row;
+        }
+
+        // Add row functionality
+        addRowBtn.addEventListener('click', function () {
+          const row = createGarmentRow();
+          garmentList.appendChild(row);
+          updateRemoveButtons();
+        });
+
+        // Remove row functionality
         garmentList.addEventListener('click', function (e) {
           if (e.target.classList.contains('remove-row')) {
             e.target.closest('.garment-row').remove();
+            updateRemoveButtons();
           }
         });
+
+        // Update remove button visibility
+        function updateRemoveButtons() {
+          const rows = garmentList.querySelectorAll('.garment-row');
+          rows.forEach((row, index) => {
+            const removeBtn = row.querySelector('.remove-row');
+            if (rows.length === 1) {
+              removeBtn.style.display = 'none';
+            } else {
+              removeBtn.style.display = '';
+            }
+          });
+        }
+
+        // Initialize remove button states
+        updateRemoveButtons();
       });
     </script>
   </body>
