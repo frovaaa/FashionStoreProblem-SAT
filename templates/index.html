@@ -201,42 +201,134 @@
           </div>
           <div class="card mb-3 mt-md-0 mt-3">
             <div class="card-body">
-              <div class="test-links mb-2">
-                <span class="fw-bold">Quick test:</span><br />
+              <div class="test-links mb-2">                <span class="fw-bold">SAT Quick tests:</span><br />
                 <button
                   type="button"
-                  class="btn btn-outline-primary btn-sm mb-1"
-                  onclick="window.location.href='?test=sat_tests/test_1.txt'"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_1.txt')"
                 >
                   SAT Test 1
                 </button>
                 <button
                   type="button"
-                  class="btn btn-outline-primary btn-sm mb-1"
-                  onclick="window.location.href='?test=sat_tests/test_2.txt'"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_2.txt')"
                 >
                   SAT Test 2
                 </button>
                 <button
                   type="button"
-                  class="btn btn-outline-primary btn-sm mb-1"
-                  onclick="window.location.href='?test=sat_tests/test_3.txt'"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_3.txt')"
                 >
                   SAT Test 3
                 </button>
                 <button
                   type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_e_2.txt')"
+                >
+                  SAT E2
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_e_3.txt')"
+                >
+                  SAT E3
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_h_1.txt')"
+                >
+                  SAT H1
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_h_3.txt')"
+                >
+                  SAT H3
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_h_4.txt')"
+                >
+                  SAT H4
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_i_1.txt')"
+                >
+                  SAT I1
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-success btn-sm mb-1"
+                  onclick="loadQuickTest('sat_tests/test_i_2.txt')"
+                >
+                  SAT I2
+                </button>
+                <br><br>
+                <span class="fw-bold">UNSAT Quick tests:</span><br />
+                <button
+                  type="button"
                   class="btn btn-outline-danger btn-sm mb-1"
-                  onclick="window.location.href='?test=unsat_tests/test_1.txt'"
+                  onclick="loadQuickTest('unsat_tests/test_1.txt')"
                 >
                   UNSAT Test 1
                 </button>
                 <button
                   type="button"
                   class="btn btn-outline-danger btn-sm mb-1"
-                  onclick="window.location.href='?test=unsat_tests/test_2.txt'"
+                  onclick="loadQuickTest('unsat_tests/test_2.txt')"
                 >
                   UNSAT Test 2
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mb-1"
+                  onclick="loadQuickTest('unsat_tests/test_e_1.txt')"
+                >
+                  UNSAT E1
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mb-1"
+                  onclick="loadQuickTest('unsat_tests/test_h_2.txt')"
+                >
+                  UNSAT H2
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mb-1"
+                  onclick="loadQuickTest('unsat_tests/test_h_5.txt')"
+                >
+                  UNSAT H5
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mb-1"
+                  onclick="loadQuickTest('unsat_tests/test_h_6.txt')"
+                >
+                  UNSAT H6
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mb-1"
+                  onclick="loadQuickTest('unsat_tests/test_i_3.txt')"
+                >
+                  UNSAT I3
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm mb-1"
+                  onclick="loadQuickTest('unsat_tests/test_i_4.txt')"
+                >
+                  UNSAT I4
                 </button>
               </div>
             </div>
@@ -379,10 +471,59 @@
               removeBtn.style.display = '';
             }
           });
-        }
-
-        // Initialize remove button states
+        }        // Initialize remove button states
         updateRemoveButtons();
+
+        // Function to load quick test data
+        window.loadQuickTest = function(testFile) {
+          // Fetch the test file content
+          fetch(`/load_test_file?file=${encodeURIComponent(testFile)}`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Failed to load test file');
+              }
+              return response.text();
+            })
+            .then(fileContent => {
+              const lines = fileContent.trim().split('\n').filter(line => line.trim());
+              const validGarments = ['hat', 'coat', 'top', 'bottom', 'shoes', 'gloves'];
+              const validColors = ['red', 'blue', 'green', 'white', 'black', 'pink'];
+              
+              // Clear existing dropdown rows
+              garmentList.innerHTML = '';
+
+              let hasValidInput = false;
+
+              lines.forEach(line => {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                  const garment = parts[0].toLowerCase();
+                  const color = parts[1].toLowerCase();
+                  
+                  if (validGarments.includes(garment) && validColors.includes(color)) {
+                    const row = createGarmentRow(garment, color);
+                    garmentList.appendChild(row);
+                    hasValidInput = true;
+                  }
+                }
+              });
+
+              if (!hasValidInput) {
+                // Add a default empty row if no valid input found
+                const row = createGarmentRow('', '');
+                garmentList.appendChild(row);
+              } else {
+                // Switch to dropdown mode to show the results
+                dropdownMode.checked = true;
+                toggleInputMode();
+                updateRemoveButtons();
+              }
+            })
+            .catch(error => {
+              console.error('Error loading test file:', error);
+              alert('Failed to load test file: ' + error.message);
+            });
+        };
       });
     </script>
   </body>

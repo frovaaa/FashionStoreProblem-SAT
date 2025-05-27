@@ -25,6 +25,28 @@ def parse_sat_output(output):
     return "SATISFIABLE", []
 
 
+@app.route("/load_test_file")
+def load_test_file():
+    """Load content of a test file for filling dropdowns."""
+    testfile = request.args.get("file")
+    if not testfile:
+        return "No file specified", 400
+    
+    # Security check - only allow files from sat_tests and unsat_tests directories
+    if not (testfile.startswith("sat_tests/") or testfile.startswith("unsat_tests/")):
+        return "Invalid file path", 400
+    
+    if not os.path.exists(testfile):
+        return "File not found", 404
+    
+    try:
+        with open(testfile, 'r') as f:
+            content = f.read()
+        return content
+    except Exception as e:
+        return f"Error reading file: {str(e)}", 500
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
